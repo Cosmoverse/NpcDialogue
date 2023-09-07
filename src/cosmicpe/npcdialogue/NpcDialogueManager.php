@@ -38,6 +38,11 @@ final class NpcDialogueManager{
 		self::$manager->getPlayer($player)->sendDialogue($dialogue);
 	}
 
+	public static function update(Player $player, NpcDialogue $dialogue) : void{
+		self::$manager !== null || throw new BadMethodCallException("NpcDialog is not registered");
+		self::$manager->getPlayer($player)->updateDialogue($dialogue);
+	}
+
 	/**
 	 * @template TKey of string|int
 	 * @template TResponseType of mixed
@@ -55,5 +60,30 @@ final class NpcDialogueManager{
 		$texture ??= new DefaultNpcDialogueTexture(DefaultNpcDialogueTexture::TEXTURE_NPC_10);
 		$button_mapping ??= array_keys($buttons);
 		return yield from Await::promise(static fn(Closure $resolve, Closure $reject) => $instance->sendDialogue(new AsyncNpcDialogue($name, $text, $texture, array_values($buttons), $button_mapping, $resolve, $reject)));
+	}
+
+	/**
+	 * @template TKey of string|int
+	 * @template TResponseType of mixed
+	 * @param Player $player
+	 * @param string|null $name
+	 * @param string|null $text
+	 * @param NpcDialogueTexture|null $texture
+	 * @param array<TKey, NpcDialogueButton>|null $buttons
+	 * @param list<TResponseType>|null $button_mapping
+	 */
+	public static function updateRequest(Player $player, ?string $name = null, ?string $text = null, ?NpcDialogueTexture $texture = null, ?array $buttons = null, ?array $button_mapping = null) : void{
+		self::$manager !== null || throw new BadMethodCallException("NpcDialog is not registered");
+		$instance = self::$manager->getPlayer($player);
+		$current = $instance->getCurrentDialogue();
+		$current instanceof AsyncNpcDialogue || throw new BadMethodCallException("Player is not viewing an asynchronous dialogue");
+		$buttons ??= array_values($buttons);
+		$button_mapping ??= array_keys($buttons);
+		$instance->updateDialogue(new AsyncNpcDialogue($name ?? $current->name, $text ?? $current->text, $texture ?? $current->texture, $buttons, $button_mapping, $current->resolve, $current->reject));
+	}
+
+	public static function remove(Player $player) : ?NpcDialogue{
+		self::$manager !== null || throw new BadMethodCallException("NpcDialog is not registered");
+		return self::$manager->getPlayer($player)->removeCurrentDialogue()?->dialogue;
 	}
 }

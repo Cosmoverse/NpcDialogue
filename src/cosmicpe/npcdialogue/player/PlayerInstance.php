@@ -110,7 +110,7 @@ final class PlayerInstance{
 			$info->actor_runtime_id,
 			NpcDialoguePacket::ACTION_OPEN,
 			$info->dialogue->getText(),
-			"sceneName",
+			(string) $info->actor_runtime_id,
 			$info->dialogue->getName(),
 			json_encode(array_map(static fn(NpcDialogueButton $button) : array => [
 				"button_name" => $button->getName(),
@@ -143,20 +143,23 @@ final class PlayerInstance{
 		}
 	}
 
-	public function getCurrentDialogue() : ?NpcDialogue{
+	public function getCurrentDialogueInfo() : ?PlayerNpcDialogueInfo{
 		$dialogue = $this->current_dialogue?->dialogue;
-		return $dialogue !== NullNpcDialogue::instance() ? $dialogue : null;
+		return $dialogue !== NullNpcDialogue::instance() ? $this->current_dialogue : null;
 	}
 
-	public function onDialogueRespond(int $index) : void{
-		$dialogue = $this->getCurrentDialogue();
-		if($dialogue !== null){
-			if(isset($dialogue->getButtons()[$index])){
-				$dialogue->onPlayerRespond($this->player, $index);
+	public function getCurrentDialogue() : ?NpcDialogue{
+		return $this->getCurrentDialogueInfo()->dialogue;
+	}
+
+	public function onDialogueRespond(string $scene_name, int $index) : void{
+		$info = $this->getCurrentDialogueInfo();
+		if($info !== null && (int) $scene_name === $info->actor_runtime_id){
+			if(isset($info->dialogue->getButtons()[$index])){
+				$info->dialogue->onPlayerRespond($this->player, $index);
 			}else{
-				$dialogue->onPlayerRespondInvalid($this->player, $index);
+				$info->dialogue->onPlayerRespondInvalid($this->player, $index);
 			}
-			$this->removeCurrentDialogue();
 		}
 	}
 

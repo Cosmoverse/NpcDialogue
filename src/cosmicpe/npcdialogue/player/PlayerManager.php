@@ -69,7 +69,7 @@ final class PlayerManager{
 			}
 
 			if($packet->requestType === NpcRequestPacket::REQUEST_EXECUTE_ACTION){
-				$instance->onDialogueRespond($packet->actionIndex);
+				$instance->onDialogueRespond($packet->sceneName, $packet->actionIndex);
 			}elseif($packet->requestType === NpcRequestPacket::REQUEST_EXECUTE_OPENING_COMMANDS){
 				$instance->onDialogueReceive();
 			}elseif($packet->requestType === NpcRequestPacket::REQUEST_EXECUTE_CLOSING_COMMANDS){

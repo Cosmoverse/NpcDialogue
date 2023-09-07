@@ -24,13 +24,13 @@ final class AsyncNpcDialogue implements NpcDialogue{
 	 * @param Closure(NpcDialogueException) : void $reject
 	 */
 	public function __construct(
-		readonly private string $name,
-		readonly private string $text,
-		readonly private NpcDialogueTexture $texture,
-		readonly private array $buttons,
-		readonly private array $button_mapping,
-		readonly private Closure $resolve,
-		readonly private Closure $reject
+		readonly public string $name,
+		readonly public string $text,
+		readonly public NpcDialogueTexture $texture,
+		readonly public array $buttons,
+		readonly public array $button_mapping,
+		readonly public Closure $resolve,
+		readonly public Closure $reject
 	){}
 
 	public function getName() : string{
