@@ -20,5 +20,11 @@ interface NpcDialogue{
 	 */
 	public function getButtons() : array;
 
-	public function onClose(Player $player) : void;
+	public function onPlayerRespond(Player $player, int $button) : void;
+
+	public function onPlayerRespondInvalid(Player $player, int $invalid_response) : void;
+
+	public function onPlayerClose(Player $player) : void;
+
+	public function onPlayerDisconnect(Player $player) : void;
 }

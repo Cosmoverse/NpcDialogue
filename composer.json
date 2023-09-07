@@ -5,7 +5,8 @@
     "license": "GPL-3.0-only",
     "require": {
         "php": "^8.1",
-        "pocketmine/pocketmine-mp": "^5.0.0"
+        "pocketmine/pocketmine-mp": "^5.0.0",
+        "sof3/await-generator": "^3.0.0"
     },
     "autoload": {
         "psr-4": {

@@ -148,6 +148,18 @@ final class PlayerInstance{
 		return $dialogue !== NullNpcDialogue::instance() ? $dialogue : null;
 	}
 
+	public function onDialogueRespond(int $index) : void{
+		$dialogue = $this->getCurrentDialogue();
+		if($dialogue !== null){
+			if(isset($dialogue->getButtons()[$index])){
+				$dialogue->onPlayerRespond($this->player, $index);
+			}else{
+				$dialogue->onPlayerRespondInvalid($this->player, $index);
+			}
+			$this->removeCurrentDialogue();
+		}
+	}
+
 	public function removeCurrentDialogue() : ?PlayerNpcDialogueInfo{
 		if($this->current_dialogue === null || $this->current_dialogue->dialogue === NullNpcDialogue::instance()){
 			return null;
@@ -155,7 +167,7 @@ final class PlayerInstance{
 
 		$this->logger->debug("Closed dialogue");
 		$current_dialogue = $this->current_dialogue;
-		$current_dialogue->dialogue->onClose($this->player);
+		$current_dialogue->dialogue->onPlayerDisconnect($this->player);
 		$current_dialogue->dialogue = NullNpcDialogue::instance();
 
 		$npc_actor_runtime_id = self::getNpcActorRuntimeId();

@@ -86,3 +86,4 @@ final class DefaultNpcDialogueTexture implements NpcDialogueTexture{
 		yield from $this->inner->apply($entity_runtime_id, $metadata, $pos);
 	}
 }
+

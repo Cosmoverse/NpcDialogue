@@ -11,10 +11,10 @@ final class SimpleNpcDialogueButton implements NpcDialogueButton{
 
 	/**
 	 * @param string $name
-	 * @param Closure(Player) : void $on_click
+	 * @param (Closure(Player) : void)|null $on_click
 	 * @return self
 	 */
-	public static function simple(string $name, Closure $on_click) : self{
+	public static function simple(string $name, ?Closure $on_click = null) : self{
 		return new self($name, "", null, 0, 1, $on_click);
 	}
 
@@ -24,7 +24,7 @@ final class SimpleNpcDialogueButton implements NpcDialogueButton{
 	 * @param string|null $data
 	 * @param int $mode
 	 * @param int $type
-	 * @param Closure(Player) : void $on_click
+	 * @param (Closure(Player) : void)|null $on_click
 	 */
 	private function __construct(
 		private string $name,
@@ -32,7 +32,7 @@ final class SimpleNpcDialogueButton implements NpcDialogueButton{
 		private ?string $data,
 		private int $mode,
 		private int $type,
-		private Closure $on_click
+		private ?Closure $on_click
 	){}
 
 	public function getName() : string{
@@ -56,6 +56,8 @@ final class SimpleNpcDialogueButton implements NpcDialogueButton{
 	}
 
 	public function onClick(Player $player) : void{
-		($this->on_click)($player);
+		if($this->on_click !== null){
+			($this->on_click)($player);
+		}
 	}
 }

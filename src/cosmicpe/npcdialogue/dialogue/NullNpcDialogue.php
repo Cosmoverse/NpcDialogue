@@ -34,7 +34,19 @@ final class NullNpcDialogue implements NpcDialogue{
 		throw new RuntimeException("Cannot get buttons of null dialogue");
 	}
 
-	public function onClose(Player $player) : void{
+	public function onPlayerRespond(Player $player, int $button) : void{
+		throw new RuntimeException("Cannot handle response in a null dialogue");
+	}
+
+	public function onPlayerRespondInvalid(Player $player, int $invalid_response) : void{
+		throw new RuntimeException("Cannot handle response in a null dialogue");
+	}
+
+	public function onPlayerClose(Player $player) : void{
 		throw new RuntimeException("Cannot close a null dialogue");
+	}
+
+	public function onPlayerDisconnect(Player $player) : void{
+		throw new RuntimeException("Cannot handle disconnect in a null dialogue");
 	}
 }

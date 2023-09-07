@@ -21,7 +21,7 @@ use pocketmine\player\Player;
 final class NpcDialogueBuilder{
 
 	public static function create() : self{
-		return new self("Default name", "Default text", new DefaultNpcDialogueTexture(DefaultNpcDialogueTexture::TEXTURE_NPC_10), [], null);
+		return new self("Default name", "Default text", new DefaultNpcDialogueTexture(DefaultNpcDialogueTexture::TEXTURE_NPC_10), [], null, null);
 	}
 
 	/**
@@ -29,6 +29,7 @@ final class NpcDialogueBuilder{
 	 * @param string $text
 	 * @param NpcDialogueTexture $texture
 	 * @param list<NpcDialogueButton> $buttons
+	 * @param (Closure(Player, int) : void)|null $on_respond
 	 * @param (Closure(Player) : void)|null $on_close
 	 */
 	private function __construct(
@@ -36,6 +37,7 @@ final class NpcDialogueBuilder{
 		public string $text,
 		public NpcDialogueTexture $texture,
 		public array $buttons,
+		public ?Closure $on_respond,
 		public ?Closure $on_close
 	){}
 
@@ -94,6 +96,15 @@ final class NpcDialogueBuilder{
 	}
 
 	/**
+	 * @param (Closure(Player, int) : void)|null $on_respond
+	 * @return self
+	 */
+	public function setResponseListener(?Closure $on_respond) : self{
+		$this->on_respond = $on_respond;
+		return $this;
+	}
+
+	/**
 	 * @param (Closure(Player) : void)|null $on_close
 	 * @return self
 	 */
@@ -103,6 +114,6 @@ final class NpcDialogueBuilder{
 	}
 
 	public function build() : NpcDialogue{
-		return new SimpleNpcDialogue($this->name, $this->text, $this->texture, $this->buttons, $this->on_close);
+		return new SimpleNpcDialogue($this->name, $this->text, $this->texture, $this->buttons, $this->on_respond, $this->on_close);
 	}
 }

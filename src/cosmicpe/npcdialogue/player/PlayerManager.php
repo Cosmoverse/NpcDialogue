@@ -69,14 +69,7 @@ final class PlayerManager{
 			}
 
 			if($packet->requestType === NpcRequestPacket::REQUEST_EXECUTE_ACTION){
-				$dialogue = $instance->getCurrentDialogue();
-				if($dialogue !== null){
-					$buttons = $dialogue->getButtons();
-					if(isset($buttons[$packet->actionIndex])){
-						$instance->removeCurrentDialogue();
-						$buttons[$packet->actionIndex]->onClick($player);
-					}
-				}
+				$instance->onDialogueRespond($packet->actionIndex);
 			}elseif($packet->requestType === NpcRequestPacket::REQUEST_EXECUTE_OPENING_COMMANDS){
 				$instance->onDialogueReceive();
 			}elseif($packet->requestType === NpcRequestPacket::REQUEST_EXECUTE_CLOSING_COMMANDS){

@@ -6,29 +6,31 @@ namespace cosmicpe\npcdialogue\dialogue;
 
 use Closure;
 use cosmicpe\npcdialogue\dialogue\texture\NpcDialogueTexture;
+use cosmicpe\npcdialogue\NpcDialogueException;
 use pocketmine\player\Player;
 
-final class SimpleNpcDialogue implements NpcDialogue{
+/**
+ * @template TResponseType
+ */
+final class AsyncNpcDialogue implements NpcDialogue{
 
 	/**
 	 * @param string $name
 	 * @param string $text
 	 * @param NpcDialogueTexture $texture
 	 * @param list<NpcDialogueButton> $buttons
-	 * @param (Closure(Player, int) : void)|null $on_respond
-	 * @param (Closure(Player) : void)|null $on_close
-	 * @param (Closure(Player, int) : void)|null $on_response_invalid
-	 * @param (Closure(Player) : void)|null $on_disconnect
+	 * @param list<TResponseType> $button_mapping
+	 * @param Closure(TResponseType) : void $resolve
+	 * @param Closure(NpcDialogueException) : void $reject
 	 */
 	public function __construct(
 		readonly private string $name,
 		readonly private string $text,
 		readonly private NpcDialogueTexture $texture,
 		readonly private array $buttons,
-		readonly private ?Closure $on_respond = null,
-		readonly private ?Closure $on_close = null,
-		readonly private ?Closure $on_response_invalid = null,
-		readonly private ?Closure $on_disconnect = null
+		readonly private array $button_mapping,
+		readonly private Closure $resolve,
+		readonly private Closure $reject
 	){}
 
 	public function getName() : string{
@@ -49,29 +51,18 @@ final class SimpleNpcDialogue implements NpcDialogue{
 
 	public function onPlayerRespond(Player $player, int $button) : void{
 		$this->buttons[$button]->onClick($player);
-		if($this->on_respond !== null){
-			($this->on_respond)($player, $button);
-		}
+		($this->resolve)($this->button_mapping[$button]);
 	}
 
 	public function onPlayerRespondInvalid(Player $player, int $invalid_response) : void{
-		if($this->on_response_invalid !== null){
-			($this->on_response_invalid)($player, $invalid_response);
-		}
+		($this->reject)(new NpcDialogueException("Player sent an invalid response ({$invalid_response})", NpcDialogueException::ERR_PLAYER_RESPONSE_INVALID));
 	}
 
 	public function onPlayerClose(Player $player) : void{
-		if($this->on_close !== null){
-			($this->on_close)($player);
-		}
+		($this->reject)(new NpcDialogueException("Player closed", NpcDialogueException::ERR_PLAYER_CLOSED));
 	}
 
 	public function onPlayerDisconnect(Player $player) : void{
-		if($this->on_disconnect !== null){
-			($this->on_disconnect)($player);
-		}
-		if($this->on_close !== null){
-			($this->on_close)($player);
-		}
+		($this->reject)(new NpcDialogueException("Player disconnected", NpcDialogueException::ERR_PLAYER_DISCONNECTED));
 	}
 }
