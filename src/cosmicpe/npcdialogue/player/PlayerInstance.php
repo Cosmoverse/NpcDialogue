@@ -26,11 +26,6 @@ use const JSON_THROW_ON_ERROR;
 
 final class PlayerInstance{
 
-	private static function getNpcActorRuntimeId() : int{
-		static $npc_actor_runtime_id = null;
-		return $npc_actor_runtime_id ??= Entity::nextRuntimeId();
-	}
-
 	private bool $modify_abilities = false;
 	private ?PlayerNpcDialogueInfo $current_dialogue = null;
 	private ?PlayerNpcDialogueInfo $next_dialogue = null;
@@ -77,25 +72,23 @@ final class PlayerInstance{
 	public function sendDialogue(NpcDialogue $dialogue) : void{
 		$this->removeCurrentDialogue();
 		if($this->current_dialogue !== null && $this->current_dialogue->status !== PlayerNpcDialogueInfo::STATUS_CLOSED){
-			$this->next_dialogue = new PlayerNpcDialogueInfo($dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
+			$this->next_dialogue = new PlayerNpcDialogueInfo(Entity::nextRuntimeId(), $dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
 		}else{
-			$this->current_dialogue = new PlayerNpcDialogueInfo($dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
-			$this->sendDialogueInternal($dialogue);
+			$this->current_dialogue = new PlayerNpcDialogueInfo(Entity::nextRuntimeId(), $dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
+			$this->sendDialogueInternal($this->current_dialogue);
 		}
 	}
 
-	private function sendDialogueInternal(NpcDialogue $dialogue) : void{
+	private function sendDialogueInternal(PlayerNpcDialogueInfo $info) : void{
 		$this->logger->debug("Attempting to send dialogue");
-		$npc_actor_runtime_id = self::getNpcActorRuntimeId();
-		$session = $this->player->getNetworkSession();
-		$session->sendDataPacket(RemoveActorPacket::create($npc_actor_runtime_id));
 
-		$texture = $dialogue->getTexture();
+		$session = $this->player->getNetworkSession();
+		$texture = $info->dialogue->getTexture();
 
 		$metadata = new EntityMetadataCollection();
 		$metadata->setGenericFlag(EntityMetadataFlags::IMMOBILE, true);
 		$metadata->setByte(EntityMetadataProperties::HAS_NPC_COMPONENT, 1);
-		foreach($texture->apply($npc_actor_runtime_id, $metadata, new Vector3(0.0, -2.0, 0.0)) as $packet){
+		foreach($texture->apply($info->actor_runtime_id, $metadata, new Vector3(0.0, -2.0, 0.0)) as $packet){
 			$session->sendDataPacket($packet);
 		}
 
@@ -106,18 +99,18 @@ final class PlayerInstance{
 		}
 
 		$session->sendDataPacket(NpcDialoguePacket::create(
-			$npc_actor_runtime_id,
+			$info->actor_runtime_id,
 			NpcDialoguePacket::ACTION_OPEN,
-			$dialogue->getText(),
+			$info->dialogue->getText(),
 			"sceneName",
-			$dialogue->getName(),
+			$info->dialogue->getName(),
 			json_encode(array_map(static fn(NpcDialogueButton $button) : array => [
 				"button_name" => $button->getName(),
 				"text" => $button->getText(),
 				"data" => $button->getData(),
 				"mode" => $button->getMode(),
 				"type" => $button->getType()
-			], $dialogue->getButtons()), JSON_THROW_ON_ERROR)
+			], $info->dialogue->getButtons()), JSON_THROW_ON_ERROR)
 		));
 
 		if($is_op){
@@ -138,7 +131,7 @@ final class PlayerInstance{
 			if($this->next_dialogue !== null){
 				$this->current_dialogue = $this->next_dialogue;
 				$this->next_dialogue = null;
-				$this->sendDialogueInternal($this->current_dialogue->dialogue);
+				$this->sendDialogueInternal($this->current_dialogue);
 			}
 		}
 	}
@@ -170,10 +163,9 @@ final class PlayerInstance{
 		$current_dialogue->dialogue->onPlayerDisconnect($this->player);
 		$current_dialogue->dialogue = NullNpcDialogue::instance();
 
-		$npc_actor_runtime_id = self::getNpcActorRuntimeId();
 		$session = $this->player->getNetworkSession();
-		$session->sendDataPacket(NpcDialoguePacket::create($npc_actor_runtime_id, NpcDialoguePacket::ACTION_CLOSE, "", "", "", ""));
-		$session->sendDataPacket(RemoveActorPacket::create($npc_actor_runtime_id));
+		$session->sendDataPacket(NpcDialoguePacket::create($current_dialogue->actor_runtime_id, NpcDialoguePacket::ACTION_CLOSE, "", "", "", ""));
+		$session->sendDataPacket(RemoveActorPacket::create($current_dialogue->actor_runtime_id));
 		$this->manager->tick($this->player);
 		return $current_dialogue;
 	}
