@@ -70,8 +70,5 @@ final class SimpleNpcDialogue implements NpcDialogue{
 		if($this->on_disconnect !== null){
 			($this->on_disconnect)($player);
 		}
-		if($this->on_close !== null){
-			($this->on_close)($player);
-		}
 	}
 }

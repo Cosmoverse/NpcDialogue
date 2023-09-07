@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace cosmicpe\npcdialogue\player;
 
-use BadMethodCallException;
 use Logger;
 use cosmicpe\npcdialogue\dialogue\NpcDialogue;
 use cosmicpe\npcdialogue\dialogue\NpcDialogueButton;
@@ -36,6 +35,14 @@ final class PlayerInstance{
 		readonly private Player $player,
 		readonly private Logger $logger
 	){}
+
+	public function destroy() : void{
+		$dialogue = $this->getCurrentDialogue();
+		if($dialogue !== null){
+			$dialogue->onPlayerDisconnect($this->player);
+			$this->removeCurrentDialogue();
+		}
+	}
 
 	public function tick() : bool{
 		if($this->current_dialogue === null || $this->current_dialogue->status === PlayerNpcDialogueInfo::STATUS_CLOSED || $this->current_dialogue->dialogue !== NullNpcDialogue::instance()){
@@ -70,30 +77,29 @@ final class PlayerInstance{
 		));
 	}
 
-	public function sendDialogue(NpcDialogue $dialogue) : void{
-		$this->removeCurrentDialogue();
+	public function sendDialogue(NpcDialogue $dialogue, bool $update = false) : void{
 		if($this->current_dialogue !== null && $this->current_dialogue->status !== PlayerNpcDialogueInfo::STATUS_CLOSED){
-			$this->next_dialogue = new PlayerNpcDialogueInfo(Entity::nextRuntimeId(), $dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
+			if($update){
+				$this->current_dialogue->dialogue = $dialogue;
+				$this->sendDialogueWindow($this->current_dialogue);
+			}else{
+				$this->removeCurrentDialogue();
+				$this->next_dialogue = new PlayerNpcDialogueInfo($this->current_dialogue->actor_runtime_id, $dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
+			}
 		}else{
+			$this->removeCurrentDialogue();
 			$this->current_dialogue = new PlayerNpcDialogueInfo(Entity::nextRuntimeId(), $dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
 			$this->sendDialogueInternal($this->current_dialogue);
 		}
 	}
 
-	public function updateDialogue(NpcDialogue $dialogue) : void{
-		$this->current_dialogue !== null || throw new BadMethodCallException("Player is not viewing a dialogue");
-		$this->current_dialogue = new PlayerNpcDialogueInfo($this->current_dialogue->actor_runtime_id, $dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
-		$this->sendDialogueWindow($this->current_dialogue);
-	}
-
 	private function sendDialogueInternal(PlayerNpcDialogueInfo $info) : void{
 		$this->logger->debug("Attempting to send dialogue");
 		$session = $this->player->getNetworkSession();
-		$texture = $info->dialogue->getTexture();
 		$metadata = new EntityMetadataCollection();
 		$metadata->setGenericFlag(EntityMetadataFlags::IMMOBILE, true);
 		$metadata->setByte(EntityMetadataProperties::HAS_NPC_COMPONENT, 1);
-		foreach($texture->apply($info->actor_runtime_id, $metadata, new Vector3(0.0, -2.0, 0.0)) as $packet){
+		foreach($info->dialogue->getTexture()->apply($info->actor_runtime_id, $metadata, new Vector3(0.0, -2.0, 0.0)) as $packet){
 			$session->sendDataPacket($packet);
 		}
 		$this->sendDialogueWindow($info);
@@ -170,7 +176,7 @@ final class PlayerInstance{
 
 		$this->logger->debug("Closed dialogue");
 		$current_dialogue = $this->current_dialogue;
-		$current_dialogue->dialogue->onPlayerDisconnect($this->player);
+		$current_dialogue->dialogue->onPlayerClose($this->player);
 		$current_dialogue->dialogue = NullNpcDialogue::instance();
 
 		$session = $this->player->getNetworkSession();
