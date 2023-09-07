@@ -149,7 +149,7 @@ final class PlayerInstance{
 	}
 
 	public function getCurrentDialogue() : ?NpcDialogue{
-		return $this->getCurrentDialogueInfo()->dialogue;
+		return $this->getCurrentDialogueInfo()?->dialogue;
 	}
 
 	public function onDialogueRespond(string $scene_name, int $index) : void{

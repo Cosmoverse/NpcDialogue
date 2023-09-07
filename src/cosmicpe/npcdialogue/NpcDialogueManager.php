@@ -77,8 +77,13 @@ final class NpcDialogueManager{
 		$instance = self::$manager->getPlayer($player);
 		$current = $instance->getCurrentDialogue();
 		$current instanceof AsyncNpcDialogue || throw new BadMethodCallException("Player is not viewing an asynchronous dialogue");
-		$buttons ??= array_values($buttons);
-		$button_mapping ??= array_keys($buttons);
+		if($buttons !== null){
+			$buttons = array_values($buttons);
+			$button_mapping ??= array_keys($buttons);
+		}else{
+			$buttons = $current->buttons;
+			$button_mapping = $current->button_mapping;
+		}
 		$instance->updateDialogue(new AsyncNpcDialogue($name ?? $current->name, $text ?? $current->text, $texture ?? $current->texture, $buttons, $button_mapping, $current->resolve, $current->reject));
 	}
 
