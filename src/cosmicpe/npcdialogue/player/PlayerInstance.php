@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace cosmicpe\npcdialogue\player;
 
+use BadMethodCallException;
 use Logger;
 use cosmicpe\npcdialogue\dialogue\NpcDialogue;
 use cosmicpe\npcdialogue\dialogue\NpcDialogueButton;
@@ -79,25 +80,32 @@ final class PlayerInstance{
 		}
 	}
 
+	public function updateDialogue(NpcDialogue $dialogue) : void{
+		$this->current_dialogue !== null || throw new BadMethodCallException("Player is not viewing a dialogue");
+		$this->current_dialogue = new PlayerNpcDialogueInfo($this->current_dialogue->actor_runtime_id, $dialogue, PlayerNpcDialogueInfo::STATUS_SENT, 0);
+		$this->sendDialogueWindow($this->current_dialogue);
+	}
+
 	private function sendDialogueInternal(PlayerNpcDialogueInfo $info) : void{
 		$this->logger->debug("Attempting to send dialogue");
-
 		$session = $this->player->getNetworkSession();
 		$texture = $info->dialogue->getTexture();
-
 		$metadata = new EntityMetadataCollection();
 		$metadata->setGenericFlag(EntityMetadataFlags::IMMOBILE, true);
 		$metadata->setByte(EntityMetadataProperties::HAS_NPC_COMPONENT, 1);
 		foreach($texture->apply($info->actor_runtime_id, $metadata, new Vector3(0.0, -2.0, 0.0)) as $packet){
 			$session->sendDataPacket($packet);
 		}
+		$this->sendDialogueWindow($info);
+	}
 
+	private function sendDialogueWindow(PlayerNpcDialogueInfo $info) : void{
+		$session = $this->player->getNetworkSession();
 		$is_op = $this->player->hasPermission(DefaultPermissions::ROOT_OPERATOR);
 		if($is_op){
 			$this->modify_abilities = true;
 			$session->syncAbilities($this->player);
 		}
-
 		$session->sendDataPacket(NpcDialoguePacket::create(
 			$info->actor_runtime_id,
 			NpcDialoguePacket::ACTION_OPEN,
@@ -112,7 +120,6 @@ final class PlayerInstance{
 				"type" => $button->getType()
 			], $info->dialogue->getButtons()), JSON_THROW_ON_ERROR)
 		));
-
 		if($is_op){
 			$this->modify_abilities = false;
 			$session->syncAbilities($this->player);
