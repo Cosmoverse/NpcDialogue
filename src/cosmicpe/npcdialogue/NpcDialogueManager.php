@@ -61,6 +61,6 @@ final class NpcDialogueManager{
 
 	public static function remove(Player $player) : ?NpcDialogue{
 		self::$manager !== null || throw new BadMethodCallException("NpcDialog is not registered");
-		return self::$manager->getPlayer($player)->removeCurrentDialogue()?->dialogue;
+		return self::$manager->getPlayerNullable($player)?->removeCurrentDialogue()?->dialogue;
 	}
 }

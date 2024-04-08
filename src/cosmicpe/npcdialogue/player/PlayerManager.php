@@ -42,7 +42,9 @@ final class PlayerManager{
 			$this->players[$player->getId()] = new PlayerInstance($this, $player, new PrefixedLogger($plugin->getLogger(), $player->getName()));
 		}, EventPriority::MONITOR, $plugin);
 		$manager->registerEvent(PlayerQuitEvent::class, function(PlayerQuitEvent $event) : void{
-			$this->players[$id = $event->getPlayer()->getId()]->destroy();
+			if(isset($this->players[$id = $event->getPlayer()->getId()])){
+				$this->players[$id]->destroy();
+			}
 			unset($this->players[$id], $this->ticking[$id]);
 		}, EventPriority::MONITOR, $plugin);
 		$plugin->getScheduler()->scheduleRepeatingTask(new ClosureTask(function() : void{
