@@ -34,9 +34,9 @@ final class NpcDialogueManager{
 		self::$manager->init($plugin);
 	}
 
-	public static function send(Player $player, NpcDialogue $dialogue) : void{
+	public static function send(Player $player, NpcDialogue $dialogue, bool $update_existing = false) : void{
 		self::$manager !== null || throw new BadMethodCallException("NpcDialog is not registered");
-		self::$manager->getPlayer($player)->sendDialogue($dialogue);
+		self::$manager->getPlayer($player)->sendDialogue($dialogue, $update_existing);
 	}
 
 	/**
