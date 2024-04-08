@@ -21,15 +21,18 @@ use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\network\mcpe\protocol\types\skin\SkinData;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use function json_encode;
 use const JSON_THROW_ON_ERROR;
 
 final class PlayerNpcDialogueTexture implements NpcDialogueTexture{
 
-	readonly private SkinData $skin_data;
-	readonly private string $skin_index;
+	readonly public SkinData $skin_data;
+	readonly public string $skin_index;
+	readonly public UuidInterface $uuid;
 
 	public function __construct(Skin $skin, ?NpcDialogueTextureOffset $picker_offset = null, ?NpcDialogueTextureOffset $portrait_offset = null){
+		$this->uuid = Uuid::uuid4();
 		$this->skin_data = TypeConverter::getInstance()->getSkinAdapter()->toSkinData($skin);
 		$this->skin_index = json_encode([
 			"picker_offsets" => $picker_offset ?? NpcDialogueTextureOffset::defaultPicker(),
@@ -39,9 +42,8 @@ final class PlayerNpcDialogueTexture implements NpcDialogueTexture{
 
 	public function apply(int $entity_runtime_id, EntityMetadataCollection $metadata, Vector3 $pos) : Generator{
 		$metadata->setString(EntityMetadataProperties::NPC_SKIN_INDEX, $this->skin_index);
-		$uuid = Uuid::uuid4();
 		yield AddPlayerPacket::create(
-			$uuid,
+			$this->uuid,
 			"",
 			$entity_runtime_id,
 			"",
@@ -59,6 +61,6 @@ final class PlayerNpcDialogueTexture implements NpcDialogueTexture{
 			"",
 			DeviceOS::UNKNOWN
 		);
-		yield PlayerSkinPacket::create($uuid, "a", "b", $this->skin_data);
+		yield PlayerSkinPacket::create($this->uuid, "a", "b", $this->skin_data);
 	}
 }
