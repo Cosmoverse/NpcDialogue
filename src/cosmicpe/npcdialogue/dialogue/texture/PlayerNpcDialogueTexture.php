@@ -9,6 +9,7 @@ use pocketmine\entity\Skin;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\AddPlayerPacket;
+use pocketmine\network\mcpe\protocol\PlayerListPacket;
 use pocketmine\network\mcpe\protocol\PlayerSkinPacket;
 use pocketmine\network\mcpe\protocol\types\AbilitiesData;
 use pocketmine\network\mcpe\protocol\types\DeviceOS;
@@ -18,6 +19,7 @@ use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
 use pocketmine\network\mcpe\protocol\types\GameMode;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
+use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\skin\SkinData;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use Ramsey\Uuid\Uuid;
@@ -41,6 +43,10 @@ final class PlayerNpcDialogueTexture implements NpcDialogueTexture{
 	}
 
 	public function apply(int $entity_runtime_id, EntityMetadataCollection $metadata, Vector3 $pos) : Generator{
+		yield PlayerListPacket::add([
+			PlayerListEntry::createAdditionEntry($this->uuid, $entity_runtime_id, "", $this->skin_data)
+		]);
+
 		$metadata->setString(EntityMetadataProperties::NPC_SKIN_INDEX, $this->skin_index);
 		yield AddPlayerPacket::create(
 			$this->uuid,
@@ -61,6 +67,7 @@ final class PlayerNpcDialogueTexture implements NpcDialogueTexture{
 			"",
 			DeviceOS::UNKNOWN
 		);
-		yield PlayerSkinPacket::create($this->uuid, "a", "b", $this->skin_data);
+
+		yield PlayerListPacket::remove([PlayerListEntry::createRemovalEntry($this->uuid)]);
 	}
 }
