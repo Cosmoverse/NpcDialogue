@@ -163,6 +163,7 @@ final class PlayerInstance{
 		if($info !== null && (int) $scene_name === $info->actor_runtime_id){
 			if(isset($info->dialogue->getButtons()[$index])){
 				$info->dialogue->onPlayerRespond($this->player, $index);
+				$this->removeCurrentDialogue();
 			}else{
 				$info->dialogue->onPlayerRespondInvalid($this->player, $index);
 			}
