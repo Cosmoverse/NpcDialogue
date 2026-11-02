@@ -10,8 +10,9 @@ use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\AddPlayerPacket;
 use pocketmine\network\mcpe\protocol\PlayerListPacket;
-use pocketmine\network\mcpe\protocol\PlayerSkinPacket;
 use pocketmine\network\mcpe\protocol\types\AbilitiesData;
+use pocketmine\network\mcpe\protocol\types\command\CommandPermissions;
+use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\types\DeviceOS;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
@@ -21,7 +22,6 @@ use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\skin\SkinData;
-use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use function json_encode;
@@ -43,7 +43,7 @@ final class PlayerNpcDialogueTexture implements NpcDialogueTexture{
 	}
 
 	public function apply(int $entity_runtime_id, EntityMetadataCollection $metadata, Vector3 $pos) : Generator{
-		yield PlayerListPacket::add([
+		yield PlayerListPacket::create([
 			PlayerListEntry::createAdditionEntry($this->uuid, $entity_runtime_id, "", $this->skin_data)
 		]);
 
@@ -62,12 +62,13 @@ final class PlayerNpcDialogueTexture implements NpcDialogueTexture{
 			GameMode::SURVIVAL,
 			$metadata->getAll(),
 			new PropertySyncData([], []),
-			UpdateAbilitiesPacket::create(new AbilitiesData(0, 0, $entity_runtime_id, [])),
+			new AbilitiesData(CommandPermissions::NORMAL, PlayerPermissions::VISITOR, $entity_runtime_id, []),
 			[],
+			null,
 			"",
 			DeviceOS::UNKNOWN
 		);
 
-		yield PlayerListPacket::remove([PlayerListEntry::createRemovalEntry($this->uuid)]);
+		yield PlayerListPacket::create([PlayerListEntry::createRemovalEntry($this->uuid)]);
 	}
 }

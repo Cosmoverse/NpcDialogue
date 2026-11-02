@@ -36,7 +36,8 @@ final class EntityNpcDialogueTexture implements NpcDialogueTexture{
 			[],
 			$metadata->getAll(),
 			new PropertySyncData([], []),
-			[]
+			[],
+			null
 		);
 	}
 }
